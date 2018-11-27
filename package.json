@@ -25,6 +25,7 @@
   },
   "build": {
     "appId": "xyz.andv.yamu",
-    "productName": "Yamu"
+    "productName": "Yamu",
+    "asar": false
   }
 }

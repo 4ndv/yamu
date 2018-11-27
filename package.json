@@ -1,19 +1,30 @@
 {
   "name": "yamuapp",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Yandex.Music macOS desktop app",
   "main": "src/index.js",
+  "repository": "github:4ndv/yamu",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "electron ."
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "release": "electron-builder"
   },
   "author": "Andrey Viktorov",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^3.0.10"
+    "electron": "^3.0.10",
+    "electron-builder": "^20.36.2"
   },
   "dependencies": {
+    "axios": "^0.18.0",
     "lodash": "^4.17.11",
-    "node-notifier": "^5.3.0"
+    "node-notifier": "^5.3.0",
+    "semver": "^5.6.0"
+  },
+  "build": {
+    "appId": "xyz.andv.yamu",
+    "productName": "Yamu"
   }
 }

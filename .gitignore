@@ -56,3 +56,7 @@ spec/.hash
 
 # Eslint Cache
 .eslintcache
+
+# builder pack
+/*.tgz
+/release.sh

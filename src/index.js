@@ -1,11 +1,18 @@
-const { app, BrowserWindow, ipcMain: ipc, globalShortcut, systemPreferences } = require('electron')
+const { app, BrowserWindow, ipcMain: ipc, globalShortcut, systemPreferences, dialog } = require('electron')
+const { execSync, exec } = require('child_process')
+const os = require('os')
 const path = require('path')
 const notifier = require('node-notifier')
 const _ = require('lodash')
 const fs = require('fs')
+const semver = require('semver')
+const axios = require('axios')
 
 class APP {
   constructor () {
+    this.appId = 'xyz.andv.yamu'
+    this.repoName = '4ndv/yamu'
+
     this.window = new BrowserWindow({
       title: 'Yamu',
       width: 1100,
@@ -32,6 +39,8 @@ class APP {
     })
 
     this.initMediaKeys()
+
+    this.checkForUpdates()
   }
 
   processEvents (sender, { type, data }) {
@@ -72,34 +81,66 @@ class APP {
   }
 
   initMediaKeys () {
-    console.log('Register media key status', globalShortcut.register('medianexttrack', () => {
+    if (!this.checkMediaAccessibilitySettings()) {
+      console.error('Failed to register global shortcuts')
+
+      dialog.showMessageBox(this.window, {
+        type: 'info',
+        buttons: ['Открыть системные настройки...', 'OK'],
+        message: 'Для работы медиа-кнопок, пожалуйста, разрешите доступ в разделе "Защита и безопасность -> Конфиденциальность -> Универсальный доступ" системных настроек и перезапустите приложение'
+      }, (index) => {
+        if (index === 0) {
+          exec('open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"')
+        }
+      })
+
+      return
+    }
+
+    globalShortcut.register('medianexttrack', () => {
       console.log('medianexttrack pressed')
 
       this.sendMediaAction('next')
-    }))
+    })
 
-    console.log('Register media key status', globalShortcut.register('mediaprevioustrack', () => {
+    globalShortcut.register('mediaprevioustrack', () => {
       console.log('mediaprevioustrack pressed')
 
       this.sendMediaAction('previous')
-    }))
+    })
 
-    console.log('Register media key status', globalShortcut.register('mediaplaypause', () => {
+    globalShortcut.register('mediaplaypause', () => {
       console.log('mediaplaypause pressed')
 
       this.sendMediaAction('playpause')
-    }))
+    })
 
-    console.log('Register media key status', globalShortcut.register('mediastop', () => {
+    globalShortcut.register('mediastop', () => {
       console.log('mediastop pressed')
 
       this.sendMediaAction('stop')
-    }))
+    })
 
     // Unregistering on quit
     app.on('will-quit', () => {
       globalShortcut.unregisterAll()
     })
+  }
+
+  checkMediaAccessibilitySettings () {
+    const osRelease = semver.coerce(os.release())
+
+    // TODO: Monitor this issue: electron#14837
+
+    // Ignore OSes < Mojave
+    // 18.0.0 is the darwin version for Mojave
+    if (process.platform === 'darwin' && semver.lt(osRelease, '18.0.0')) {
+      return true
+    }
+
+    const result = execSync(`sqlite3 "/Library/Application Support/com.apple.TCC/TCC.db" "SELECT allowed FROM access WHERE client = '${this.appId}' AND service = 'kTCCServiceAccessibility';"`).toString().trim()
+
+    return result === '1'
   }
 
   sendMediaAction (action) {
@@ -116,6 +157,31 @@ class APP {
 
     // Short delay to match yandex
     // setTimeout(() => systemPreferences.setAppLevelAppearance(appearance), 100)
+  }
+
+  checkForUpdates () {
+    axios.get(`https://api.github.com/repos/${this.repoName}/releases/latest`)
+      .then(({ data }) => {
+
+        const currentVersion = semver.coerce(app.getVersion())
+        const latestRelease = semver.coerce(data.tag_name)
+
+        if (semver.gt(latestRelease, currentVersion)) {
+          dialog.showMessageBox(null, {
+            type: 'info',
+            buttons: ['Перейти к скачиванию', 'Oтмена'],
+            message: `Доступна новая версия ${data.tag_name}!\n\n${data.body}\n`
+          }, (index) => {
+            if (index === 0) {
+              exec('open "https://github.com/4ndv/yamu/releases"')
+            }
+          })
+        }
+      })
+      .catch((error) => {
+        console.error('Error during updates check')
+        console.error(error)
+      })
   }
 }
 

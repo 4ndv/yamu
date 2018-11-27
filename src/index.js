@@ -81,21 +81,21 @@ class APP {
   }
 
   initMediaKeys () {
-    if (!this.checkMediaAccessibilitySettings()) {
-      console.error('Failed to register global shortcuts')
+    // if (!this.checkMediaAccessibilitySettings()) {
+    //   console.error('Failed to register global shortcuts')
 
-      dialog.showMessageBox(this.window, {
-        type: 'info',
-        buttons: ['Открыть системные настройки...', 'OK'],
-        message: 'Для работы медиа-кнопок, пожалуйста, разрешите доступ в разделе "Защита и безопасность -> Конфиденциальность -> Универсальный доступ" системных настроек и перезапустите приложение'
-      }, (index) => {
-        if (index === 0) {
-          exec('open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"')
-        }
-      })
+    //   dialog.showMessageBox(this.window, {
+    //     type: 'info',
+    //     buttons: ['Открыть системные настройки...', 'OK'],
+    //     message: 'Для работы медиа-кнопок разрешите доступ в разделе "Защита и безопасность -> Конфиденциальность -> Универсальный доступ" системных настроек и перезапустите приложение'
+    //   }, (index) => {
+    //     if (index === 0) {
+    //       exec('open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"')
+    //     }
+    //   })
 
-      return
-    }
+    //   return
+    // }
 
     globalShortcut.register('medianexttrack', () => {
       console.log('medianexttrack pressed')
@@ -167,7 +167,7 @@ class APP {
         const latestRelease = semver.coerce(data.tag_name)
 
         if (semver.gt(latestRelease, currentVersion)) {
-          dialog.showMessageBox(null, {
+          dialog.showMessageBox(this.window, {
             type: 'info',
             buttons: ['Перейти к скачиванию', 'Oтмена'],
             message: `Доступна новая версия ${data.tag_name}!\n\n${data.body}\n`

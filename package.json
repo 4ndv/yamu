@@ -1,6 +1,6 @@
 {
   "name": "yamuapp",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Yandex.Music macOS desktop app",
   "main": "src/index.js",
   "repository": "github:4ndv/yamu",

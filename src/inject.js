@@ -6,7 +6,6 @@ document.addEventListener('DOMContentLoaded', () => {
   try {
     // Я не хотел вырезать рекламу, но эти элементы сильно мешают в маленьком окне десктопного приложения
     // Прости, Яндекс :(
-    // (но рекламу в сайдбаре я оставил, ибо она особо там и не мешает)
     document.querySelector('.d-overhead').remove()
     document.querySelector('.d-overhead-mobile').remove()
     document.querySelector('.bar > .bar-below').remove()
@@ -27,6 +26,26 @@ document.addEventListener('DOMContentLoaded', () => {
     ipc.send('events', {
       type: 'TRACK',
       data: track
+    })
+  })
+
+  // Lowering ads volume twice
+  externalAPI.on(externalAPI.EVENT_ADVERT, (status) => {
+    const volume = +externalAPI.getVolume().toFixed(2)
+
+    let nextVolume = null
+
+    if (status === false) {
+      nextVolume = volume * 2
+    } else {
+      nextVolume = volume / 2
+    }
+
+    externalAPI.setVolume(nextVolume)
+
+    ipc.send('events', {
+      type: 'ADVERT',
+      data: { status }
     })
   })
 

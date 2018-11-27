@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain: ipc, globalShortcut, systemPreferences } = 
 const path = require('path')
 const notifier = require('node-notifier')
 const _ = require('lodash')
+const fs = require('fs')
 
 class APP {
   constructor () {
@@ -13,6 +14,11 @@ class APP {
         nodeIntegration: false,
         preload: path.join(__dirname, 'inject.js')
       }
+    })
+
+    // Inject css for our own fixes
+    this.window.webContents.on('dom-ready', () => {
+      this.window.webContents.insertCSS(fs.readFileSync(path.join(__dirname, 'inject.css')).toString().replace(/\n/g, ' '))
     })
 
     this.window.loadURL('https://music.yandex.ru')
@@ -31,7 +37,7 @@ class APP {
   processEvents (sender, { type, data }) {
     switch (type) {
       case 'API_READY':
-        console.log('READY!')
+        console.log('externalAPI ready')
         break
       case 'TRACK':
         this.trackNotify(data)

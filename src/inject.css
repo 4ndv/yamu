@@ -1,0 +1,19 @@
+/* Hide NAGs */
+.d-overhead, .d-overhead-mobile, .bar > .bar-below {
+  display: none !important;
+}
+
+/* Make centerblock full width */
+.centerblock-wrapper {
+  width: 100% !important;
+}
+
+/* Hide sidebar */
+.sidebar__placeholder {
+  display: none !important;
+}
+
+/* Don't limit width for root and bar */
+.page-root, .bar {
+  max-width: none !important;
+}

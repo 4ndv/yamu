@@ -3,17 +3,6 @@
 const { ipcRenderer: ipc } = require('electron')
 
 document.addEventListener('DOMContentLoaded', () => {
-  try {
-    // Я не хотел вырезать рекламу, но эти элементы сильно мешают в маленьком окне десктопного приложения
-    // Прости, Яндекс :(
-    document.querySelector('.d-overhead').remove()
-    document.querySelector('.d-overhead-mobile').remove()
-    document.querySelector('.bar > .bar-below').remove()
-  } catch (error) {
-    console.error('Error during nag removal')
-    console.error(error)
-  }
-
   externalAPI.on(externalAPI.EVENT_READY, () => {
     ipc.send('events', {
       type: 'API_READY'
@@ -66,10 +55,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   })
 
-  // Интеграция с Mojave Dark Mode
+  // Mojave Dark Mode Integration
   ipc.send('events', { type: 'THEME', data: { name: Mu.settings.theme } })
 
-  // Отслеживание изменений темы
+  // Track theme changes
   Mu.settings = new Proxy(Mu.settings, {
     set(target, prop, value) {
       switch (prop) {

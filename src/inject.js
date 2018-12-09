@@ -50,6 +50,8 @@ document.addEventListener('DOMContentLoaded', () => {
       case 'stop':
         externalAPI.togglePause()
         break
+      case 'like':
+        externalAPI.toggleLike()
       default:
         console.error('Unknown media action', action)
     }

@@ -1,6 +1,5 @@
-const { app, BrowserWindow, ipcMain: ipc, globalShortcut, systemPreferences, dialog } = require('electron')
-const { execSync, exec } = require('child_process')
-const os = require('os')
+const { app, BrowserWindow, ipcMain: ipc, globalShortcut, dialog } = require('electron')
+const { exec } = require('child_process')
 const path = require('path')
 const notifier = require('node-notifier')
 const _ = require('lodash')
@@ -62,22 +61,57 @@ class APP {
   trackNotify (track) {
     const title = _.get(track, 'title', 'Unknown track')
 
+    const liked = _.get(track, 'liked', false)
+
     let cover = _.get(track, 'cover', false)
 
     if (cover) {
       cover = `https://${cover.replace('%%', '80x80')}`
     }
 
+    let prefix = ''
+
+    if (liked) {
+      prefix = '♥️ '
+    }
+
     const artist = _.get(track, 'artists[0].title', 'Unknown artist')
 
     const album = _.get(track, 'album.title', 'Unknown album')
 
-    notifier.notify({
+    const SKIP_LABEL = 'Пропустить'
+    const LIKE_LABEL = '♥️'
+
+    const notificationData = {
       title: track.title,
-      message: `${artist} — ${album}`,
+      message: `${prefix}${artist} — ${album}`,
       icon: cover,
       wait: true
-    })
+    }
+
+    // node-notifier is a total clusterfuck and closeLabel doesn't work without actions o_O
+    if (liked) {
+      notificationData.actions = SKIP_LABEL
+    } else {
+      notificationData.closeLabel = SKIP_LABEL
+      notificationData.actions = LIKE_LABEL
+    }
+
+    notifier.notify(
+      notificationData,
+      (error, response, metadata) => {
+        console.log('Notification response:', response, metadata)
+
+        switch (_.get(metadata, 'activationValue', null)) {
+        case SKIP_LABEL:
+          this.sendMediaAction('next')
+          break
+        case LIKE_LABEL:
+          this.sendMediaAction('like')
+          break
+        }
+      }
+    )
   }
 
   initMediaKeys () {
@@ -144,6 +178,7 @@ class APP {
 
     // Temporarily disabled, because it's supported only in electron 4.0.0 beta, which has broken cookies persistence
     // TODO: montior electron#15365
+    // TODO: Wait until electron 4.0.0-beta9!
 
     // Short delay to match yandex
     // setTimeout(() => systemPreferences.setAppLevelAppearance(appearance), 100)

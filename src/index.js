@@ -97,29 +97,29 @@ class APP {
     //   return
     // }
 
-    globalShortcut.register('medianexttrack', () => {
+    console.log('Media key register status:', globalShortcut.register('MediaNextTrack', () => {
       console.log('medianexttrack pressed')
 
       this.sendMediaAction('next')
-    })
+    }))
 
-    globalShortcut.register('mediaprevioustrack', () => {
+    console.log('Media key register status:', globalShortcut.register('MediaPreviousTrack', () => {
       console.log('mediaprevioustrack pressed')
 
       this.sendMediaAction('previous')
-    })
+    }))
 
-    globalShortcut.register('mediaplaypause', () => {
+    console.log('Media key register status:', globalShortcut.register('MediaPlayPause', () => {
       console.log('mediaplaypause pressed')
 
       this.sendMediaAction('playpause')
-    })
+    }))
 
-    globalShortcut.register('mediastop', () => {
+    console.log('Media key register status:', globalShortcut.register('MediaStop', () => {
       console.log('mediastop pressed')
 
       this.sendMediaAction('stop')
-    })
+    }))
 
     // Unregistering on quit
     app.on('will-quit', () => {
@@ -128,19 +128,9 @@ class APP {
   }
 
   checkMediaAccessibilitySettings () {
-    const osRelease = semver.coerce(os.release())
-
     // TODO: Monitor this issue: electron#14837
-
-    // Ignore OSes < Mojave
-    // 18.0.0 is the darwin version for Mojave
-    if (process.platform === 'darwin' && semver.lt(osRelease, '18.0.0')) {
-      return true
-    }
-
-    const result = execSync(`sqlite3 "/Library/Application Support/com.apple.TCC/TCC.db" "SELECT allowed FROM access WHERE client = '${this.appId}' AND service = 'kTCCServiceAccessibility';"`).toString().trim()
-
-    return result === '1'
+    // TODO: Wait until electron 4.0.0-beta9!
+    return true
   }
 
   sendMediaAction (action) {
@@ -188,6 +178,10 @@ class APP {
 // Allow audio play without user interaction
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required')
 
+// Some WebAudio API stuff
+app.commandLine.appendSwitch('enable-experimental-web-platform-features', '1')
+
 app.on('ready', () => {
-  const yamu = new APP()
+  // Possible workaround for a freezing issue during start up
+  setTimeout(() => { const yamu = new APP() }, 1000)
 })

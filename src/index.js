@@ -216,6 +216,10 @@ app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required')
 // Some WebAudio API stuff
 app.commandLine.appendSwitch('enable-experimental-web-platform-features', '1')
 
+// Closing app when all windows is closed
+app.on('window-all-closed', () => {
+  app.quit()
+})
 app.on('ready', () => {
   // Possible workaround for a freezing issue during start up
   setTimeout(() => { const yamu = new APP() }, 1000)

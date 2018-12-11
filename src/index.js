@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain: ipc, globalShortcut, dialog } = require('electron')
+const { app, BrowserWindow, ipcMain: ipc, globalShortcut, systemPreferences, dialog } = require('electron')
 const { exec } = require('child_process')
 const path = require('path')
 const notifier = require('node-notifier')
@@ -6,6 +6,7 @@ const _ = require('lodash')
 const fs = require('fs')
 const semver = require('semver')
 const axios = require('axios')
+const accessibilityCheck = require('mac-accessibility-features-check')
 
 class APP {
   constructor () {
@@ -114,23 +115,38 @@ class APP {
     )
   }
 
+  accessibilityDialog () {
+    const text = 'Для работы медиа-кнопок разрешите доступ в появившемся окне, либо в разделе "Защита и безопасность -> Конфиденциальность -> Универсальный доступ" системных настроек.\n\nЕсли галочка уже стоит - уберите её и поставьте заново.\n\nПосле нажатия "Перезапустить" приложение будет перезапущено для применения изменений.'
+
+    dialog.showMessageBox(this.window, {
+      type: 'info',
+      buttons: ['Открыть системные настройки...', 'Напомнить позже', 'Перезапустить'],
+      message: text
+    }, (index) => {
+      if (index === 0) {
+        exec('open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"')
+
+        this.accessibilityDialog() // Call it again
+      } else if (index === 2) {
+        app.relaunch()
+        app.exit(0)
+      }
+    })
+  }
+
   initMediaKeys () {
-    // if (!this.checkMediaAccessibilitySettings()) {
-    //   console.error('Failed to register global shortcuts')
+    const accessibilityGranted = accessibilityCheck.check()
 
-    //   dialog.showMessageBox(this.window, {
-    //     type: 'info',
-    //     buttons: ['Открыть системные настройки...', 'OK'],
-    //     message: 'Для работы медиа-кнопок разрешите доступ в разделе "Защита и безопасность -> Конфиденциальность -> Универсальный доступ" системных настроек и перезапустите приложение'
-    //   }, (index) => {
-    //     if (index === 0) {
-    //       exec('open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"')
-    //     }
-    //   })
+    if (!accessibilityGranted) {
+      this.accessibilityDialog()
 
-    //   return
-    // }
+      setTimeout(() => accessibilityCheck.checkAndPrompt(), 1500)
+    } else {
+      this.registerMediaKeys()
+    }
+  }
 
+  registerMediaKeys () {
     console.log('Media key register status:', globalShortcut.register('MediaNextTrack', () => {
       console.log('medianexttrack pressed')
 
@@ -161,12 +177,6 @@ class APP {
     })
   }
 
-  checkMediaAccessibilitySettings () {
-    // TODO: Monitor this issue: electron#14837
-    // TODO: Wait until electron 4.0.0-beta9!
-    return true
-  }
-
   sendMediaAction (action) {
     this.window.webContents.send('media-actions', { action })
   }
@@ -176,12 +186,8 @@ class APP {
 
     if (name === 'black') appearance = 'dark'
 
-    // Temporarily disabled, because it's supported only in electron 4.0.0 beta, which has broken cookies persistence
-    // TODO: montior electron#15365
-    // TODO: Wait until electron 4.0.0-beta9!
-
-    // Short delay to match yandex
-    // setTimeout(() => systemPreferences.setAppLevelAppearance(appearance), 100)
+    // Short delay to match yandex animation
+    setTimeout(() => systemPreferences.setAppLevelAppearance(appearance), 100)
   }
 
   checkForUpdates () {
@@ -220,6 +226,7 @@ app.commandLine.appendSwitch('enable-experimental-web-platform-features', '1')
 app.on('window-all-closed', () => {
   app.quit()
 })
+
 app.on('ready', () => {
   // Possible workaround for a freezing issue during start up
   setTimeout(() => { const yamu = new APP() }, 1000)
